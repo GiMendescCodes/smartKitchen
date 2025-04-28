@@ -57,7 +57,7 @@ export default function Home() {
   }
 
   function irParaHistorico() {
-    // aqui o nome da rota DEVE ser "Historico", igual ao nav.tsx
+  
     navigation.navigate('Historico', { historico });
   }
 
