@@ -1,68 +1,61 @@
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Platform, StatusBar, ScrollView, ActivityIndicator, Alert, Keyboard } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import { useState } from 'react'
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
+const alturaStatusBar = StatusBar.currentHeight;
+const KEY_GEMINI = 'AIzaSyCZBVpqGNptO2x1pOf48MxPB0dDhWfDZ3I';
 
-const alturaStatusBar = StatusBar.currentHeight
+const genAI = new GoogleGenerativeAI(KEY_GEMINI);
 
+const model = genAI.getGenerativeModel({
+  model: "gemini-1.5-flash",
+});
+
+const generationConfig = {
+  temperature: 1,
+  topP: 0.95,
+  topK: 64,
+  maxOutputTokens: 500,
+  responseMimeType: "text/plain",
+};
 
 export default function App() {
 
-  const [load, defLoad] = useState(false);
-  const [receita, defReceita] = useState("");
+  const [load, setLoad] = useState(false);
+  const [receita, setReceita] = useState("");
 
-  const [ingr1, defIngr1] = useState("");
-  const [ingr2, defIngr2] = useState("");
-  const [ingr3, defIngr3] = useState("");
-  const [ingr4, defIngr4] = useState("");
-  const [ocasiao, defOcasiao] = useState("");
+  const [ingr1, setIngr1] = useState("");
+  const [ingr2, setIngr2] = useState("");
+  const [ingr3, setIngr3] = useState("");
+  const [ingr4, setIngr4] = useState("");
+  const [ocasiao, setOcasiao] = useState("");
 
   async function gerarReceita() {
     if (ingr1 === "" || ingr2 === "" || ingr3 === "" || ingr4 === "" || ocasiao === "") {
-      Alert.alert("Atenção", "Informe todos os ingredientes!", [{ text: "Beleza!" }])
+      Alert.alert("Atenção", "Informe todos os ingredientes!", [{ text: "Beleza!" }]);
       return;
     }
-    defReceita("");
-    defLoad(true);
+    setReceita("");
+    setLoad(true);
     Keyboard.dismiss();
+
+    const prompt = `Sugira uma receita detalhada para o ${ocasiao} usando os ingredientes: ${ingr1}, ${ingr2}, ${ingr3} e ${ingr4} e pesquise a receita no YouTube. Caso encontre, informe o link.`;
+
+    try {
+      const chatSession = model.startChat({
+        generationConfig,
+        history: [],
+      });
+
+      const result = await chatSession.sendMessage(prompt);
+      setReceita(result.response.text());
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoad(false);
+    }
   }
-
-  const KEY_GPT = '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';
-
-  const prompt = `Sugira uma receita detalhada para o ${ocasiao} usando os ingredientes: ${ingr1}, ${ingr2}, ${ingr3} e ${ingr4} e pesquise a receita no YouTube. Caso encontre, informe o link.`;
-
-  fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${KEY_GPT}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      temperature: 0.2,
-      max_tokens: 500,
-      top_p: 1,
-    })
-  })
-
-  .then(response => response.json())
-  .then((data) => {
-    console.log(data.choices[0].message.content);
-    defReceita(data.choices[0].message.content)
-  })
-  .catch((error) => {
-    console.log(error);
-  })
-  .finally(() => {
-    defLoad(false);
-  })
-
 
   return (
     <View style={ESTILOS.container}>
@@ -74,37 +67,37 @@ export default function App() {
           placeholder="Ingrediente 1"
           style={ESTILOS.input}
           value={ingr1}
-          onChangeText={(texto) => defIngr1(texto)}
+          onChangeText={(texto) => setIngr1(texto)}
         />
         <TextInput
           placeholder="Ingrediente 2"
           style={ESTILOS.input}
           value={ingr2}
-          onChangeText={(texto) => defIngr2(texto)}
+          onChangeText={(texto) => setIngr2(texto)}
         />
         <TextInput
           placeholder="Ingrediente 3"
           style={ESTILOS.input}
           value={ingr3}
-          onChangeText={(texto) => defIngr3(texto)}
+          onChangeText={(texto) => setIngr3(texto)}
         />
         <TextInput
           placeholder="Ingrediente 4"
           style={ESTILOS.input}
           value={ingr4}
-          onChangeText={(texto) => defIngr4(texto)}
+          onChangeText={(texto) => setIngr4(texto)}
         />
         <TextInput
           placeholder="Almoço ou Jantar"
           style={ESTILOS.input}
           value={ocasiao}
-          onChangeText={(texto) => defOcasiao(texto)}
+          onChangeText={(texto) => setOcasiao(texto)}
         />
       </View>
 
       <TouchableOpacity style={ESTILOS.button} onPress={gerarReceita}>
         <Text style={ESTILOS.buttonText}>Gerar receita</Text>
-        <MaterialIcons name="travel-explore" size={24} color="#FFF" />
+        <MaterialCommunityIcons name="food-variant" size={24} color="#FFF" />
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24, marginTop: 4, }} style={ESTILOS.containerScroll} showsVerticalScrollIndicator={false} >
@@ -118,11 +111,10 @@ export default function App() {
         {receita && (
           <View style={ESTILOS.content}>
             <Text style={ESTILOS.title}>Sua receita 👇</Text>
-            <Text style={{ lineHeight: 24 }}>{receita} </Text>
+            <Text style={{ lineHeight: 24 }}>{receita}</Text>
           </View>
         )}
       </ScrollView>
-
     </View>
   );
 }
@@ -161,7 +153,7 @@ const ESTILOS = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    backgroundColor: '#FF5656',
+    backgroundColor: 'blue',
     width: '90%',
     borderRadius: 8,
     flexDirection: 'row',
@@ -192,7 +184,4 @@ const ESTILOS = StyleSheet.create({
     width: '90%',
     marginTop: 8,
   }
-
-
-  
-})
+});
