@@ -1,9 +1,12 @@
 import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from './App';
 
 export default function Historico() {
   const route = useRoute<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { historico } = route.params as { historico: string[] };
 
   return (
@@ -12,12 +15,14 @@ export default function Historico() {
         data={historico}
         keyExtractor={(_, index) => index.toString()}
         renderItem={({ item, index }) => {
-          // Extrai até a primeira quebra de linha e remove espaços em branco
           const titulo = item.split('\n')[0].trim();
           return (
-            <View style={styles.item}>
+            <TouchableOpacity
+              style={styles.item}
+              onPress={() => navigation.navigate('ReceitaDetalhada', { receita: item })}
+            >
               <Text style={styles.text}>{`Receita ${index + 1}: ${titulo}`}</Text>
-            </View>
+            </TouchableOpacity>
           );
         }}
       />
