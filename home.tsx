@@ -11,7 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from './App';
 
 const alturaStatusBar = StatusBar.currentHeight;
-const KEY_GEMINI = process.env.EXPO_PUBLIC_GEMINI_KEY!;
+const KEY_GEMINI = "chave aqui";
 
 const genAI = new GoogleGenerativeAI(KEY_GEMINI);
 const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
